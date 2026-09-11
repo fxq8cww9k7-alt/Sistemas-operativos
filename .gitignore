@@ -1,2 +1,13 @@
+# Archivos temporales y de caché de Python
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
+
+# Entornos virtuales
+venv/
+.venv/
+env/
+
+# Carpetas de editores
+.vscode/
+.idea/
