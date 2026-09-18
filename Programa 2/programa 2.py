@@ -14,6 +14,7 @@ class Proceso:
         self.resultado = resultado
         self.tme = tme
         self.tt = 0
+        self.num_lote = 0
 
 def resolver_operacion(n1, op, n2):
     if op == '+':
@@ -48,8 +49,8 @@ def generar_procesos():
         id_prog = i
         tme = random.randint(5, 20)
         op = random.choice(operadores)
-        num1 = random.randint(1, 100)
-        num2 = random.randint(1, 100)
+        num1 = random.randint(0, 100)
+        num2 = random.randint(0, 100)
 
         # Evitar division entre 0
         if op in ['/', '%'] and num2 == 0:
@@ -71,7 +72,11 @@ def generar_procesos():
 def crear_lotes(procesos, capacidad=5):
     lotes = []
     for i in range(0, len(procesos), capacidad):
-        lotes.append(procesos[i:i + capacidad])
+        lote = procesos[i:i + capacidad]
+        num_lote = (i // capacidad) + 1
+        for p in lote:
+            p.num_lote = num_lote
+        lotes.append(lote)
     return lotes
 
 def leer_tecla():
@@ -81,18 +86,18 @@ def leer_tecla():
 
 def mostrar_interfaz(lotes_pendientes, lote_actual, proceso_actual, terminados, reloj):
     limpiar_pantalla()
-    print(f"No. Lotes Pendientes: {lotes_pendientes}\n")
+    print(f"# Lotes Pendientes: {lotes_pendientes}\n")
 
-    # Columna 1: Lote Trabajando
-    col1 = ["Lote Trabajando", f"{'ID':<6}{'TME':<6}{'TT':<6}"]
+    # Columna 1: Lote trabajando
+    col1 = ["Lote trabajando", f"{'ID':<6}{'TME':<6}{'TT':<6}"]
     for p in lote_actual:
         col1.append(f"{p.id_prog:<6}{p.tme:<6}{p.tt:<6}")
     while len(col1) < 8:
         col1.append("")
     col1.append(f"Contador: {reloj}")
 
-    # Columna 2: Proceso en Ejecución
-    col2 = ["Proceso en Ejecución"]
+    # Columna 2: Ejecución
+    col2 = ["Ejecución"]
     if proceso_actual:
         tr = proceso_actual.tme - proceso_actual.tt
         col2.append(f"ID       {proceso_actual.id_prog}")
@@ -104,12 +109,12 @@ def mostrar_interfaz(lotes_pendientes, lote_actual, proceso_actual, terminados, 
         col2.append("(Ninguno)")
 
     # Columna 3: Terminados
-    col3 = ["Terminados", f"{'ID':<6}{'Ope':<16}{'Res':<10}"]
+    col3 = ["Terminados", f"{'ID':<6}{'Ope':<16}{'Res':<10}{'NL':<4}"]
     for item in terminados:
         if isinstance(item, str):
             col3.append(item)
         else:
-            col3.append(f"{item.id_prog:<6}{item.operacion_str:<16}{str(item.resultado):<10}")
+            col3.append(f"{item.id_prog:<6}{item.operacion_str:<16}{str(item.resultado):<10}{str(item.num_lote):<4}")
 
     filas = max(len(col1), len(col2), len(col3))
     while len(col1) < filas:
@@ -120,7 +125,7 @@ def mostrar_interfaz(lotes_pendientes, lote_actual, proceso_actual, terminados, 
         col3.append("")
 
     for i in range(filas):
-        print(f"{col1[i]:<26} {col2[i]:<26} {col3[i]}")
+        print(f"{col1[i]:<24} {col2[i]:<26} {col3[i]}")
 
 def simular(lotes):
     reloj = 0
@@ -163,7 +168,7 @@ def simular(lotes):
                     break
 
                 if error:
-                    p.resultado = "ERROR"
+                    p.resultado = "Error"
                     terminados.append(p)
                     break
 
@@ -174,7 +179,7 @@ def simular(lotes):
                     terminados.append(p)
                     break
 
-        terminados.append(f"-- Fin Lote {idx + 1} --")
+        terminados.append("-" * 36)
 
     mostrar_interfaz(0, [], None, terminados, reloj)
     print("\n>>> FIN DE LA SIMULACION - TODOS LOS LOTES EJECUTADOS <<<")
