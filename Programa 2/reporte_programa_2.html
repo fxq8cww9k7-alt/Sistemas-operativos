@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Reporte de Práctica - Programa 2: Procesamiento por Lotes con Multiprogramación</title>
+<style>
+  @page {
+    size: letter;
+    margin: 14mm 12mm;
+    @bottom-right {
+      content: counter(page);
+    }
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
+    color: #1e293b;
+    background-color: #ffffff;
+    line-height: 1.5;
+    font-size: 9.5pt;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Header Card */
+  .header-card {
+    border: 1px solid #cbd5e1;
+    border-left: 6px solid #2563eb;
+    border-radius: 8px;
+    padding: 16px 20px;
+    background: #f8fafc;
+    margin-bottom: 16px;
+  }
+
+  .header-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 10px;
+    margin-bottom: 12px;
+  }
+
+  .header-title h1 {
+    font-size: 15pt;
+    font-weight: 700;
+    color: #0f172a;
+    letter-spacing: -0.02em;
+  }
+
+  .header-title .subtitle {
+    font-size: 9.5pt;
+    color: #64748b;
+    font-weight: 600;
+    margin-top: 3px;
+  }
+
+  .badge-group {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .badge {
+    background: #e0e7ff;
+    color: #3730a3;
+    font-size: 7.5pt;
+    font-family: 'Cascadia Code', 'Consolas', monospace;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 9999px;
+    border: 1px solid #c7d2fe;
+    text-transform: uppercase;
+  }
+
+  .badge.accent {
+    background: #ecfdf5;
+    color: #065f46;
+    border-color: #a7f3d0;
+  }
+
+  .meta-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px 24px;
+    font-size: 8.5pt;
+  }
+
+  .meta-item {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .meta-label {
+    text-transform: uppercase;
+    font-size: 7pt;
+    font-weight: 700;
+    color: #64748b;
+    letter-spacing: 0.05em;
+  }
+
+  .meta-value {
+    color: #0f172a;
+    font-weight: 600;
+  }
+
+  /* Section Styling */
+  .section {
+    margin-bottom: 16px;
+    page-break-inside: avoid;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1.5px solid #0f172a;
+    padding-bottom: 4px;
+    margin-bottom: 10px;
+  }
+
+  .section-num {
+    font-family: 'Cascadia Code', 'Consolas', monospace;
+    font-size: 8.5pt;
+    font-weight: 700;
+    color: #ffffff;
+    background: #0f172a;
+    padding: 1px 6px;
+    border-radius: 4px;
+  }
+
+  .section-title {
+    font-size: 11pt;
+    font-weight: 700;
+    color: #0f172a;
+    letter-spacing: -0.01em;
+  }
+
+  /* Callout box */
+  .callout {
+    background: #f0fdf4;
+    border-left: 3.5px solid #16a34a;
+    border-radius: 0 6px 6px 0;
+    padding: 10px 14px;
+    font-size: 9pt;
+    color: #166534;
+    margin-bottom: 12px;
+  }
+
+  p {
+    margin-bottom: 8px;
+    text-align: justify;
+    font-size: 9pt;
+    color: #334155;
+  }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 6px;
+    margin-bottom: 12px;
+    font-size: 8.5pt;
+  }
+
+  th, td {
+    padding: 6px 10px;
+    text-align: left;
+    border-bottom: 1px solid #e2e8f0;
+  }
+
+  th {
+    background: #f1f5f9;
+    color: #0f172a;
+    font-weight: 700;
+    font-size: 8pt;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  tr:nth-child(even) td {
+    background-color: #f8fafc;
+  }
+
+  .code-cell {
+    font-family: 'Cascadia Code', 'Consolas', monospace;
+    font-size: 8pt;
+    color: #0369a1;
+    font-weight: 600;
+  }
+
+  /* Diagram */
+  .diagram-container {
+    background: #0f172a;
+    border-radius: 8px;
+    padding: 14px;
+    margin: 10px 0;
+    color: #f8fafc;
+    font-family: 'Cascadia Code', 'Consolas', monospace;
+  }
+
+  .state-flow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    padding: 10px 0;
+  }
+
+  .state-node {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 6px;
+    padding: 8px 12px;
+    text-align: center;
+    min-width: 110px;
+  }
+
+  .state-node.active {
+    background: #1d4ed8;
+    border-color: #60a5fa;
+  }
+
+  .state-node.terminal.success {
+    background: #064e3b;
+    border-color: #34d399;
+  }
+
+  .state-node-title {
+    font-size: 8pt;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+
+  .state-node-sub {
+    font-size: 6.5pt;
+    color: #94a3b8;
+    margin-top: 2px;
+  }
+
+  .flow-arrow {
+    color: #64748b;
+    font-size: 11pt;
+  }
+
+  .trigger-box {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed #334155;
+    font-size: 7.5pt;
+  }
+
+  .trigger-item {
+    background: #1e293b;
+    padding: 6px 8px;
+    border-radius: 4px;
+    border-left: 2px solid #38bdf8;
+  }
+
+  .trigger-key {
+    color: #38bdf8;
+    font-weight: 700;
+  }
+
+  /* Terminal Simulation Block */
+  .terminal-window {
+    background: #090d16;
+    border-radius: 7px;
+    border: 1px solid #1e293b;
+    overflow: hidden;
+    margin: 10px 0;
+  }
+
+  .terminal-topbar {
+    background: #161f30;
+    padding: 6px 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+  .dot-red { background: #ef4444; }
+  .dot-yellow { background: #eab308; }
+  .dot-green { background: #22c55e; }
+
+  .terminal-topbar-title {
+    color: #94a3b8;
+    font-family: 'Cascadia Code', 'Consolas', monospace;
+    font-size: 7.5pt;
+    margin-left: 8px;
+  }
+
+  .terminal-body {
+    padding: 12px 14px;
+    font-family: 'Cascadia Code', 'Consolas', monospace;
+    font-size: 7.5pt;
+    line-height: 1.4;
+    color: #e2e8f0;
+    white-space: pre;
+  }
+
+  .t-cyan { color: #38bdf8; font-weight: 600; }
+  .t-green { color: #4ade80; }
+  .t-yellow { color: #facc15; }
+  .t-red { color: #f87171; font-weight: 700; }
+  .t-gray { color: #64748b; }
+
+  /* Code block */
+  .code-block {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 10px 14px;
+    font-family: 'Cascadia Code', 'Consolas', monospace;
+    font-size: 8pt;
+    color: #0f172a;
+    line-height: 1.45;
+    margin: 8px 0;
+    white-space: pre;
+  }
+
+  .keyword { color: #2563eb; font-weight: 700; }
+  .comment { color: #64748b; font-style: italic; }
+  .string { color: #059669; }
+
+  /* Grid 2 cols for phases */
+  .phase-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin: 8px 0;
+  }
+
+  .phase-card {
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 10px 12px;
+    background: #ffffff;
+  }
+
+  .phase-card-title {
+    font-weight: 700;
+    font-size: 8.5pt;
+    color: #0f172a;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .phase-card-title::before {
+    content: "";
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #2563eb;
+  }
+
+  .evidence-box {
+    border: 1.5px dashed #cbd5e1;
+    border-radius: 6px;
+    padding: 22px 16px;
+    text-align: center;
+    color: #64748b;
+    font-size: 8pt;
+    background: #f8fafc;
+    margin: 8px 0;
+  }
+
+  .page-break {
+    page-break-before: always;
+  }
+</style>
+</head>
+<body>
+
+  <!-- Header Card -->
+  <div class="header-card">
+    <div class="header-title-row">
+      <div class="header-title">
+        <h1>Reporte de Práctica de Laboratorio</h1>
+        <div class="subtitle">Sistemas Operativos &bull; Simulación de Procesamiento por Lotes y Multiprogramación</div>
+      </div>
+      <div class="badge-group">
+        <span class="badge">Actividad #2</span>
+        <span class="badge accent">Python 3.14</span>
+        <span class="badge">Win32 Native</span>
+      </div>
+    </div>
+    
+    <div class="meta-grid">
+      <div class="meta-item">
+        <span class="meta-label">Estudiante</span>
+        <span class="meta-value">Atos Aguilar</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Materia</span>
+        <span class="meta-value">Seminario de Solución de Problemas de Sistemas Operativos</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Carrera</span>
+        <span class="meta-value">Ingeniería en Computación / Informática</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Entorno de Ejecución</span>
+        <span class="meta-value">Consola Windows / Terminal PowerShell (msvcrt)</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sección 1: Objetivo -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">01</span>
+      <h2 class="section-title">Objetivo de la Actividad</h2>
+    </div>
+    <div class="callout">
+      <strong>Propósito:</strong> Diseñar, implementar y evaluar un simulador computacional que modele la transición de un esquema de <em>procesamiento por lotes estricto</em> hacia un entorno con <em>multiprogramación básica</em>, gestionando la concurrencia de trabajos mediante colas FIFO, interrupciones de E/S en tiempo real y terminaciones anormales por teclado.
+    </div>
+    <p>
+      El sistema prescinde de la captura manual de datos generando internamente los procesos con identificador único, operaciones aritméticas íntegras (+, -, *, /, residuo) y Tiempo Máximo Estimado (TME) aleatorio. Asimismo, mantiene control en tiempo real mediante escucha asíncrona de teclas para interrumpir procesos (<strong>E</strong>), forzar error (<strong>W</strong>), pausar (<strong>P</strong>) y reanudar (<strong>C</strong>), reflejando los estados en una interfaz dividida en tres columnas con trazabilidad de lotes terminados (<strong>NL</strong>).
+    </p>
+  </div>
+
+  <!-- Sección 2: Notas acerca del Lenguaje y TDAs -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">02</span>
+      <h2 class="section-title">Notas del Lenguaje y Tipos de Datos Abstractos (TDA)</h2>
+    </div>
+    <p>
+      Se utilizó <strong>Python 3</strong> aprovechando sus módulos nativos de bajo acoplamiento para evitar dependencias externas. El diseño del simulador se fundamenta en los siguientes TDAs:
+    </p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>TDA / Estructura</th>
+          <th>Implementación</th>
+          <th>Propósito en el Sistema Operativo</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="code-cell">Clase Proceso</td>
+          <td><code>class Proceso</code></td>
+          <td>PCB (Bloque de Control de Proceso) que almacena <code>id_prog</code>, <code>operacion_str</code>, <code>resultado</code>, <code>tme</code>, <code>tt</code> y <code>num_lote</code>.</td>
+        </tr>
+        <tr>
+          <td class="code-cell">Cola FIFO</td>
+          <td><code>list</code> (con <code>pop(0)</code> y <code>append()</code>)</td>
+          <td>Gestiona el despacho secuencial del lote activo. Permite el reencolado inmediato tras interrupción por E/S.</td>
+        </tr>
+        <tr>
+          <td class="code-cell">Segmentador de Lotes</td>
+          <td><code>list of lists</code> (capacidad 5)</td>
+          <td>Divide el conjunto de procesos en bloques de memoria fija de máximo 5 elementos usando <em>slicing</em>.</td>
+        </tr>
+        <tr>
+          <td class="code-cell">Event Listener</td>
+          <td>Módulo <code>msvcrt.kbhit()</code></td>
+          <td>Lectura de pulsaciones de teclado en modo no bloqueante en Windows. Fragmenta el segundo en 10 ticks de 0.1s.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Sección 3: Máquina de Estados -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">03</span>
+      <h2 class="section-title">Modelo de Estados del Proceso y Disparadores</h2>
+    </div>
+    <p>
+      El ciclo de vida de cada proceso dentro del simulador responde a una máquina de estados determinista gobernada por el reloj del sistema y las interrupciones del operador:
+    </p>
+
+    <div class="diagram-container">
+      <div class="state-flow">
+        <div class="state-node">
+          <div class="state-node-title">Nuevo</div>
+          <div class="state-node-sub">Generado aleatoriamente</div>
+        </div>
+        <div class="flow-arrow">&rarr;</div>
+        <div class="state-node">
+          <div class="state-node-title">En Espera</div>
+          <div class="state-node-sub">Cola del Lote Activo</div>
+        </div>
+        <div class="flow-arrow">&rarr;</div>
+        <div class="state-node active">
+          <div class="state-node-title">Ejecución</div>
+          <div class="state-node-sub">Uso de CPU (Reloj)</div>
+        </div>
+        <div class="flow-arrow">&rarr;</div>
+        <div class="state-node terminal success">
+          <div class="state-node-title">Terminado</div>
+          <div class="state-node-sub">Res = Calculado</div>
+        </div>
+      </div>
+
+      <div class="trigger-box">
+        <div class="trigger-item">
+          <span class="trigger-key">[E] Interrupción E/S</span><br>
+          CPU &rarr; Cola de Espera (Conserva TT acumulado)
+        </div>
+        <div class="trigger-item">
+          <span class="trigger-key">[W] Error de Proceso</span><br>
+          CPU &rarr; Terminados con resultado "Error"
+        </div>
+        <div class="trigger-item">
+          <span class="trigger-key">[P] Pausa de Sistema</span><br>
+          Detiene avance de reloj y CPU indefinidamente
+        </div>
+        <div class="trigger-item">
+          <span class="trigger-key">[C] Continuar</span><br>
+          Reanuda la ejecución tras estado de pausa
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-break"></div>
+
+  <!-- Sección 4: Solución Implementada -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">04</span>
+      <h2 class="section-title">Descripción Técnica de la Solución</h2>
+    </div>
+
+    <div class="phase-grid">
+      <div class="phase-card">
+        <div class="phase-card-title">1. Generación y Validación de Procesos</div>
+        <p style="font-size:8pt;">
+          Se solicita el total inicial de procesos y se construyen internamente: IDs consecutivos ($1 \dots N$), TME aleatorio entre 5 y 20 segundos y operaciones aritméticas con operandos válidos ($0 \dots 100$), validando que el divisor sea distinto de cero para operaciones <code>/</code> y <code>%</code>.
+        </p>
+      </div>
+
+      <div class="phase-card">
+        <div class="phase-card-title">2. Conformación de Lotes y Etiquetado</div>
+        <p style="font-size:8pt;">
+          Los procesos se subdividen en bloques de hasta 5 elementos. A cada proceso se le asigna su propiedad <code>num_lote = (i // capacidad) + 1</code> garantizando su trazabilidad inmutable al momento de ser impreso en la columna de terminados.
+        </p>
+      </div>
+
+      <div class="phase-card">
+        <div class="phase-card-title">3. Escucha de Teclas No Bloqueante</div>
+        <p style="font-size:8pt;">
+          Para responder de forma instantánea a las teclas sin alterar el ritmo de 1 segundo de CPU, cada segundo se subdivide en 10 ciclos de <code>time.sleep(0.1)</code> consultando <code>msvcrt.kbhit()</code>. Si se pulsa <strong>E</strong> o <strong>W</strong>, el ciclo se rompe de inmediato.
+        </p>
+      </div>
+
+      <div class="phase-card">
+        <div class="phase-card-title">4. Salida en Pantalla (Diseño de Pizarra)</div>
+        <p style="font-size:8pt;">
+          Se formatea una cuadrícula de 3 columnas dinámicas que replica el esquema oficial de clase: <code># Lotes Pendientes</code> en el encabezado, <code>Lote trabajando</code> con <code>ID, TME, TT</code>, <code>Ejecución</code>, y <code>Terminados</code> con <code>NL</code> y línea divisoria entre lotes.
+        </p>
+      </div>
+    </div>
+
+    <!-- Recreación de la Pizarra -->
+    <div class="terminal-window">
+      <div class="terminal-topbar">
+        <span class="dot dot-red"></span>
+        <span class="dot dot-yellow"></span>
+        <span class="dot dot-green"></span>
+        <span class="terminal-topbar-title">simulador_lotes.py &bull; Salida en Consola (Esquema de Pizarra Oficial)</span>
+      </div>
+      <div class="terminal-body">
+<span class="t-cyan"># Lotes Pendientes: 2</span>
+
+<span class="t-yellow">Lote trabajando          Ejecución                  Terminados</span>
+<span class="t-gray">ID    TME   TT           ID       6                 ID    Ope             Res       NL  </span>
+7     6     0            Ope      15 * 3            4     50 * 0          <span class="t-red">Error</span>     1   
+8     5     0            TME      10                2     10 + 5          15        1   
+9     6     0            TT       2                 1     20 / 4          5         1   
+10    7     0            TR       8                 5     30 - 10         20        1   
+                                                    3     12 % 5          2         1   
+                                                    <span class="t-gray">------------------------------------</span>
+<span class="t-green">Contador: 10</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sección 5: Código Esencial -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">05</span>
+      <h2 class="section-title">Lógica del Bucle de Ejecución e Interrupciones</h2>
+    </div>
+    <div class="code-block">
+<span class="keyword">while</span> cola:
+    p = cola.pop(0)
+    <span class="keyword">while</span> p.tt &lt; p.tme:
+        mostrar_interfaz(pendientes, cola, p, terminados, reloj)
+        <span class="comment"># Fragmentar el segundo en 10 intervalos para atender teclado al instante</span>
+        <span class="keyword">for</span> _ <span class="keyword">in</span> range(10):
+            tecla = leer_tecla()
+            <span class="keyword">if</span> tecla == <span class="string">'e'</span>:   cola.append(p); interrumpido = <span class="keyword">True</span>; <span class="keyword">break</span>
+            <span class="keyword">elif</span> tecla == <span class="string">'w'</span>: p.resultado = <span class="string">"Error"</span>; terminados.append(p); error = <span class="keyword">True</span>; <span class="keyword">break</span>
+            <span class="keyword">elif</span> tecla == <span class="string">'p'</span>: pausar_hasta_letra_c()
+            time.sleep(0.1)
+        <span class="keyword">if</span> interrumpido <span class="keyword">or</span> error: <span class="keyword">break</span>
+        p.tt += 1; reloj += 1
+    <span class="keyword">if</span> p.tt &gt;= p.tme: terminados.append(p)
+    </div>
+  </div>
+
+  <!-- Sección 6: Conclusiones -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">06</span>
+      <h2 class="section-title">Conclusiones de Ingeniería</h2>
+    </div>
+    <p>
+      1. <strong>Maximización de la Utilización de CPU:</strong> La simulación demostró fehacientemente cómo el mecanismo de interrupción por E/S (tecla <code>E</code>) previene el bloqueo ocioso del procesador. Al retirar un proceso que espera un dispositivo y asignarle el procesador al siguiente trabajo de la cola, el rendimiento global del sistema se incrementa considerablemente.
+    </p>
+    <p>
+      2. <strong>Consistencia Temporal y Trazabilidad:</strong> La separación estricta entre el reloj global (contador del sistema) y el tiempo transcurrido (<code>TT</code>) de cada proceso garantiza que las interrupciones conserven el trabajo previamente efectuado, evitando reiniciar tareas desde cero. La incorporación de la columna <code>NL</code> permite auditar con precisión qué trabajos integraban cada lote original independientemente del orden dinámico de terminación.
+    </p>
+  </div>
+
+  <!-- Sección 7: Evidencias -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">07</span>
+      <h2 class="section-title">Evidencias de Ejecución (Capturas de Pantalla)</h2>
+    </div>
+    <div class="evidence-box">
+      <strong>[ Espacio reservado para Captura de Pantalla 1 &bull; Ejecución con Tecla E y Lotes en Pizarra ]</strong><br>
+      Inserte aquí la captura mostrando el proceso en cola con <code>TT &gt; 0</code> tras interrupción y la columna <code>NL</code> completa.
+    </div>
+    <div class="evidence-box">
+      <strong>[ Espacio reservado para Captura de Pantalla 2 &bull; Terminación con Error 'W' y Fin de Simulación ]</strong><br>
+      Inserte aquí la captura de la pantalla final con 0 lotes pendientes, resultados <code>Error</code> y reloj detenido.
+    </div>
+  </div>
+
+</body>
+</html>
